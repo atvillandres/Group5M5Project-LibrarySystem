@@ -374,8 +374,8 @@ public class LibraryApplication {
 
 	}
 	
-	// Updated inputNewBook method added logging and exception handling
-	private Book inputNewBook(Scanner input) throws InvalidBookException { // inputNewBook Method Start
+	// Updated inputNewBook method added logging and exception handling 01.19.2026
+	private Book inputNewBook(Scanner input) throws InvalidBookException { // inputNewBook Method Start 01.19.2026
 		
 		
 		Book book = null;
@@ -398,16 +398,16 @@ public class LibraryApplication {
 				} else if (tempInput.length() > Constants.maxLenBookId) {
 	        		isInputValid = false;
 	        		System.out.print (Constants.strERROR_INVALID_INPUT);
-	        		logger.warn("Entered book ID: {}, {}, Book ID length cannot be more than 7",tempInput, Constants.strERROR_INVALID_INPUT);
+	        		logger.warn("Entered book ID: {}, {}, Book ID length cannot be more than 7",tempInput, Constants.strERROR_INVALID_INPUT);  // Added logger warn 01.19.2026
 	        		
-	        		//throw new InvalidBookException("Book ID length cannot be more than 7"); // commented, will exit the loop
+	        		//throw new InvalidBookException("Book ID length cannot be more than 7"); // commented, will exit the loop 01.19.2026
 	        	} else {
 	        		isInputValid = libraryService.findBook(tempInput);
 	            	if (isInputValid) {
 	    				System.out.print (Constants.strERROR_BOOK_EXIST);
-		        		logger.warn("Entered book ID: {}, {}",tempInput,  Constants.strERROR_BOOK_EXIST);
+		        		logger.warn("Entered book ID: {}, {}",tempInput,  Constants.strERROR_BOOK_EXIST); // added logger warn 01.19.2026
 	    				isInputValid = false;
-		        		//throw new InvalidBookException("Book ID "+ tempInput+" already exists"); // commented, will exit the loop
+		        		//throw new InvalidBookException("Book ID "+ tempInput+" already exists"); // commented, will exit the loop 01.19.2026
 	    				
 	    			} else {
 	    				bookId = tempInput;
@@ -471,11 +471,11 @@ public class LibraryApplication {
 	        if ((bookId != null && bookTitle !=null && bookAuthor != null)) {
 	        	if (!(bookId.equalsIgnoreCase("X") || bookTitle.equalsIgnoreCase("X") || bookAuthor.equalsIgnoreCase("X"))) {
 	                book = new Book(bookId, bookTitle, bookAuthor, false);
-	                
-	                logger.info("Book ID {} entitled {} created successfully by {}", bookId,  bookTitle, user.getName());
-	        	}
+	                // Added logger info 01.19.2026
+	                logger.info("Book ID {} entitled {} created successfully by {}", bookId,  bookTitle, user.getName()); 
+	        	} 
 	        }else {
-	        	throw new InvalidBookException("Book ID, Title or Author cannot be null or empty");
+	        	throw new InvalidBookException("Book ID, Title or Author cannot be null or empty"); // added throw InvalidBookException for null and empty 01.19.2026
 	        }
 	        
 		}catch(IllegalArgumentException e) {
