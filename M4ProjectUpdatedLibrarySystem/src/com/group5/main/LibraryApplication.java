@@ -38,6 +38,7 @@
 package com.group5.main;
 
 import java.util.Scanner;
+//Added import for Logger and LoggerFactory 01.19.2026
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -168,7 +169,7 @@ public class LibraryApplication {
 	                
 	                
 	            case '6':
-	            	
+	            	// Added try catch block for catching InvalidBookException 01.19.2026
 	            	try {
 		            	//[6] Add Book
 		            	
@@ -179,7 +180,7 @@ public class LibraryApplication {
 		                }
 
 	            	}catch(InvalidBookException e) {
-	            		logger.error("Adding book failed", e);
+	            		logger.error("Adding new book failed", e);
 	            	}
 	            	
 	                //exit to menu
@@ -399,14 +400,14 @@ public class LibraryApplication {
 	        		System.out.print (Constants.strERROR_INVALID_INPUT);
 	        		logger.warn("Entered book ID: {}, {}, Book ID length cannot be more than 7",tempInput, Constants.strERROR_INVALID_INPUT);
 	        		
-	        		//throw new InvalidBookException("Book ID length cannot be more than 7"); -- commented, will exit the loop
+	        		//throw new InvalidBookException("Book ID length cannot be more than 7"); // commented, will exit the loop
 	        	} else {
 	        		isInputValid = libraryService.findBook(tempInput);
 	            	if (isInputValid) {
 	    				System.out.print (Constants.strERROR_BOOK_EXIST);
 		        		logger.warn("Entered book ID: {}, {}",tempInput,  Constants.strERROR_BOOK_EXIST);
 	    				isInputValid = false;
-		        		//throw new InvalidBookException("Book ID "+ tempInput+" already exists"); -- commented, will exit the loop
+		        		//throw new InvalidBookException("Book ID "+ tempInput+" already exists"); // commented, will exit the loop
 	    				
 	    			} else {
 	    				bookId = tempInput;
@@ -471,7 +472,7 @@ public class LibraryApplication {
 	        	if (!(bookId.equalsIgnoreCase("X") || bookTitle.equalsIgnoreCase("X") || bookAuthor.equalsIgnoreCase("X"))) {
 	                book = new Book(bookId, bookTitle, bookAuthor, false);
 	                
-	                logger.info("Book ID {} entitled {} created successfully", bookId,  bookTitle);
+	                logger.info("Book ID {} entitled {} created successfully by {}", bookId,  bookTitle, user.getName());
 	        	}
 	        }else {
 	        	throw new InvalidBookException("Book ID, Title or Author cannot be null or empty");
@@ -479,6 +480,8 @@ public class LibraryApplication {
 	        
 		}catch(IllegalArgumentException e) {
 			logger.error("Failed to create book due to invalid argument", e);
+			
+			throw new InvalidBookException("Adding new book failed", e);
 		}
 	
 		return book;
@@ -646,6 +649,8 @@ public class LibraryApplication {
         	if ((tempInput == null) || (tempInput == "") ) {
         		isValid = false;
     			System.out.print (Constants.strERROR_INVALID_INPUT);
+    			
+    			// Added logger warn for null or empty input
     			logger.warn(Constants.strERROR_INVALID_INPUT+" Input cannot be null or empty");
         	} else {
     			//valid input

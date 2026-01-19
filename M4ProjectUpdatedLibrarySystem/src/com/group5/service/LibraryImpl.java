@@ -254,7 +254,7 @@ public class LibraryImpl implements LibraryService {
 		library.setBookList(bookList);
 		System.out.println("You have successfully added book with title " + newBook.getTitle());
 		
-		//Added logger info Jimboy Llagono 01.16.2026
+		//Added logger info Jimboy Llagono 01.19.2026
 		logger.info("You have successfully added book with title {}",newBook.getTitle());
 
 		
