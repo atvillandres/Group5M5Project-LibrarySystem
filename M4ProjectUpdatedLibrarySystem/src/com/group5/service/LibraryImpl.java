@@ -7,9 +7,12 @@ import java.util.List;
 
 import com.group5.constants.Constants;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class LibraryImpl implements LibraryService {
-
+	
+	private static final Logger logger =  LoggerFactory.getLogger(LibraryImpl.class);
 
 	private static final int initialbookcnt = 5;
 
@@ -17,6 +20,7 @@ public class LibraryImpl implements LibraryService {
 	private static List<Loan> loanList;
 
 	public Library library;
+	
 
 	private static final int DISPLAY_ALL_BOOKS       =  1;
 	private static final int DISPLAY_AVAILABLE_BOOKS =  2;
@@ -101,18 +105,23 @@ public class LibraryImpl implements LibraryService {
 
 
 	@Override
-	public int displayAllBorrowedBooks() {
-		// TODO Auto-generated method stub
+	public int displayAllBorrowedBooks(User user) {
+		// Added Logger Info - Jimboy Llagono
+		
     	System.out.println(Constants.strDISPLAY_BORROWED_BOOKS );
-
+    	logger.info("User {} selected option 3: display borrowed books", user.getName());
+    	
 		//print table header
 		displayTableHeader(DISPLAY_BORROWED_BOOKS);
 
 		//print book list
 		int rowCount = displayTableDetails(DISPLAY_BORROWED_BOOKS);
+		logger.info("Borrow books displayed. There are currently {} borrowed books", rowCount);
 		if (rowCount <= 0) {
 			System.out.println(Constants.strNORECORDFOUND );
+	    	logger.info("There are currently no borrowed books. No record found");
 		}
+		
 
 		//print table footer
 		displayTableLine(DISPLAY_BORROWED_BOOKS);
@@ -240,11 +249,21 @@ public class LibraryImpl implements LibraryService {
 
 
 	@Override
-	public Library addBook(Book newBook) {
+	public Library addBook(Book newBook, User user) {
+		
+
+			
 		bookList.add(newBook);
 		library.setBookList(bookList);
 		System.out.println("You have successfully added book with title " + newBook.getTitle());
+		
+		//Added logger info Jimboy Llagono 01.19.2026
+		logger.info("User {} have successfully added book with title {}", user.getName() ,newBook.getTitle());
+
+		
 		return this.library;
+		
+
 	}
 
 

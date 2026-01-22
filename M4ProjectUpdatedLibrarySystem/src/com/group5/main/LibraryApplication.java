@@ -38,14 +38,19 @@
 package com.group5.main;
 
 import java.util.Scanner;
+//Added import for Logger and LoggerFactory 01.19.2026
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.group5.model.*;
 import com.group5.service.LibraryImpl;
 import com.group5.service.LibraryService;
 import com.group5.constants.Constants;
+import com.group5.exception.InvalidBookException;
 
 
 public class LibraryApplication {
+	private static final Logger logger =  LoggerFactory.getLogger(LibraryApplication.class);
 	
 	private User user;
 //	private Loan loan;
@@ -117,7 +122,7 @@ public class LibraryApplication {
 	            case '3':
 	            	//[3] Display All Borrowed Books 
 	            	System.out.println(Constants.strDISPLAY_SELECTED_OPTION3);
-	            	libraryService.displayAllBorrowedBooks();
+	            	libraryService.displayAllBorrowedBooks(user);
 	            	//exit to menu
 	            	displayLibraryMenu();
 	            	askMenuChoice();
@@ -164,12 +169,20 @@ public class LibraryApplication {
 	                
 	                
 	            case '6':
-	            	//[6] Add Book
-	                System.out.println(Constants.strDISPLAY_SELECTED_OPTION6);
-	                Book book = inputNewBook(input);
-	                if (book != null) {
-		                libraryService.addBook(book);
-	                }
+	            	// Added try catch block for catching InvalidBookException 01.19.2026
+	            	try {
+		            	//[6] Add Book
+		            	
+		                System.out.println(Constants.strDISPLAY_SELECTED_OPTION6);
+		                Book book = inputNewBook(input);
+		                if (book != null) {
+			                libraryService.addBook(book, user);
+		                }
+
+	            	}catch(InvalidBookException e) {
+	            		logger.error("Adding new book failed", e);
+	            	}
+	            	
 	                //exit to menu
 	            	displayLibraryMenu();
 	            	askMenuChoice();
@@ -361,8 +374,10 @@ public class LibraryApplication {
 
 	}
 	
-	
-	private Book inputNewBook(Scanner input) {
+	// Updated inputNewBook method added logging and exception handling 01.19.2026
+	private Book inputNewBook(Scanner input) throws InvalidBookException { // inputNewBook Method Start 01.19.2026
+		
+		
 		Book book = null;
 		boolean isInputValid = false;
 		String bookId = null;
@@ -371,6 +386,8 @@ public class LibraryApplication {
 		
 		String tempInput;
 		String prompt = "";
+		
+		logger.info("User {} selected option 6 Add book", user.getName());
 		
 		//input book ID
 		prompt = Constants.strPROMPT_ENTER_BOOKID ;
@@ -383,16 +400,20 @@ public class LibraryApplication {
 				} else if (tempInput.length() > Constants.maxLenBookId) {
 	        		isInputValid = false;
 	        		System.out.print (Constants.strERROR_INVALID_INPUT);
+	        		logger.warn("User {} entered book ID: {}, Invalid input, Book ID length cannot be more than 7", user.getName(), tempInput);  // Added logger warn 01.19.2026
+	        		
+	        		//throw new InvalidBookException("Book ID length cannot be more than 7"); // commented, will exit the loop 01.19.2026
 	        	} else {
-
 	        		isInputValid = libraryService.findBook(tempInput);
-
 	            	if (isInputValid) {
 	    				System.out.print (Constants.strERROR_BOOK_EXIST);
+		        		logger.warn("User {} entered book ID: {}, Invalid! Book ID already exists.",user.getName(), tempInput); // added logger warn 01.19.2026
 	    				isInputValid = false;
-	            		
+		        		//throw new InvalidBookException("Book ID "+ tempInput+" already exists"); // commented, will exit the loop 01.19.2026
+	    				
 	    			} else {
 	    				bookId = tempInput;
+	    				logger.info("User {} inputted {} for book ID",user.getName(), tempInput);
 	    				isInputValid = true;
 		        		break;
 	    			}
@@ -418,13 +439,17 @@ public class LibraryApplication {
 		        		break;
 					} else {
 						bookTitle = tempInput;
-						isInputValid = false;
+	    				logger.info("User {} inputted {} for book title",user.getName(), tempInput);
+						isInputValid = true;
 		        		break;
 					}
 				}
 				
 			} while (!isInputValid);
+		}else {
+			throw new InvalidBookException("Adding new book failed, user inputted "+ tempInput);
 		}
+		
 
         
 		if (!tempInput.equalsIgnoreCase("X")) {
@@ -441,22 +466,36 @@ public class LibraryApplication {
 		        		break;
 					} else {
 						bookAuthor = tempInput;
-						isInputValid = false;
+	    				logger.info("User {} inputted {} for book author",user.getName(), tempInput);
+						isInputValid = true;
 		        		break;
 					}
 	        	}
 	        } while (!isInputValid);
+		}else {
+			throw new InvalidBookException("Adding new book failed, user inputted "+ tempInput);
 		}
-
-        //create Book 
-        if ((bookId != null && bookTitle !=null && bookAuthor != null)) {
-        	if (!(bookId.equalsIgnoreCase("X") || bookTitle.equalsIgnoreCase("X") || bookAuthor.equalsIgnoreCase("X"))) {
-                book = new Book(bookId, bookTitle, bookAuthor, false);
-        	}
-        }
 		
+		try {
+	        //create Book 
+	        if ((bookId != null && bookTitle !=null && bookAuthor != null)) {
+	        	if (!(bookId.equalsIgnoreCase("X") || bookTitle.equalsIgnoreCase("X") || bookAuthor.equalsIgnoreCase("X"))) {
+	                book = new Book(bookId, bookTitle, bookAuthor, false);
+	                // Added logger info 01.19.2026
+	                logger.info("Book ID {} entitled {} created successfully by {}", bookId,  bookTitle, user.getName()); 
+	        	} 
+	        }else {
+	        	throw new InvalidBookException("Book ID, Title or Author cannot be null or empty"); // added throw InvalidBookException for null and empty 01.19.2026
+	        }
+	        
+		}catch(IllegalArgumentException e) {
+			logger.error("Failed to create book due to invalid argument", e);
+			
+			throw new InvalidBookException("Adding new book failed", e);
+		}
+	
 		return book;
-	}
+	} // inputNewBook Method End
 	
 	
 	private String askBookChoiceForRemoval(Scanner input) {
@@ -607,7 +646,7 @@ public class LibraryApplication {
 	}
 	
 	
-	private String validateInput(Scanner input, String prompt) {
+	private String validateInput(Scanner input, String prompt) { 
 		String ret = null;
 		String tempInput;
     	boolean isValid = false;
@@ -620,6 +659,9 @@ public class LibraryApplication {
         	if ((tempInput == null) || (tempInput == "") ) {
         		isValid = false;
     			System.out.print (Constants.strERROR_INVALID_INPUT);
+    			
+    			// Added logger warn for null or empty input
+    			logger.warn(Constants.strERROR_INVALID_INPUT+" Input cannot be null or empty");
         	} else {
     			//valid input
     			ret = tempInput;
