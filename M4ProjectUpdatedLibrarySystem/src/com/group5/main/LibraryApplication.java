@@ -288,7 +288,7 @@ public class LibraryApplication {
     			
         		if (tempInput.equalsIgnoreCase("X")) {
 	        		bookFound = true;
-	        		logger.info("User {}, inputted X in Book ID choice. Going back to main menu.", user.getName());
+	        		logger.info("User {}, selected X in Book ID choice. Going back to main menu.", user.getName());
 	        		break;
 
         		} else {
@@ -571,7 +571,8 @@ public class LibraryApplication {
 				
 				if (tempInput.equalsIgnoreCase("X")) {
 	        		isInputValid = true;
-	        		logger.info("User {}, inputted X in Book Title. Going back to main menu.", user.getName());
+	        		System.out.println("Going back to main menu.");
+	        		logger.info("User {}, selected X in Book Title. Going back to main menu.", user.getName());
 	        		break;
 				} else {
 					bookTitle = tempInput;
@@ -594,20 +595,20 @@ public class LibraryApplication {
 	        	if (tempInput != null) {
 					if (tempInput.equalsIgnoreCase("X")) {
 		        		isInputValid = true;
-		        		logger.info("User {}, inputted X in Book Author. Going back to main menu.", user.getName());
+		        		System.out.println("Going back to main menu.");
+		        		logger.info("User {}, selected X in Book Author. Going back to main menu.", user.getName());
 		        		break;
 					} else {
 						bookAuthor = tempInput;
 						isInputValid = false;
-		        		break;
+						book = new Book(bookId, bookTitle, bookAuthor, false);
+						return book;
 					}
 	        	}
 	        } while (!isInputValid);
 		}
-
-		book = new Book(bookId, bookTitle, bookAuthor, false);
 		
-		return book;
+		return null;
 	}
 	
 	private void inputUser (Scanner input)  {
