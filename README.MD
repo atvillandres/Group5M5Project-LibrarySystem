@@ -13,5 +13,13 @@ The command above will create the following tables.
 Things to do:
 - [x] Create SQL script for creation of database, table and insert data.
 - [x] Create pom.xml.
-- [ ] Create connection to database.
-- [ ] Initialize Books.
+- [x] Create connection to database.
+- [x] Initialize Books.
+- [ ] Create user validation in Login
+- [ ] Revise Option [2] Display Available Books
+- [ ] Revise Option [3] Display All Borrowed Books
+- [ ] Revise Option [4] Borrow Book
+- [ ] Revise Option [5] Return Book
+- [ ] Revise Option [6] Add Book
+- [ ] Revise Option [7] Remove Book
+- [ ] Revise Option [8] Update Book
