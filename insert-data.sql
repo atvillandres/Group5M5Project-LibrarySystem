@@ -27,3 +27,12 @@ INSERT INTO book (title, author, isBorrowed) VALUES
 
 INSERT INTO book (title, author, isBorrowed) VALUES
 ('The Last Footprint', 'Dorian Hale', false);
+
+INSERT INTO users (name) VALUES
+('user1');
+
+INSERT INTO users (name) VALUES
+('user2');
+
+INSERT INTO users (name) VALUES
+('user3');
