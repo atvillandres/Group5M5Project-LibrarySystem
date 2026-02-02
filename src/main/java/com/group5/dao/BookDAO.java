@@ -1,0 +1,12 @@
+package com.group5.dao;
+
+import java.util.List;
+
+import com.group5.model.Book;
+
+public interface BookDAO {
+
+		List<Book> getAllBooks();
+		List<Book> getAvailableBooks();
+		List<Book> getBorrowedBooks();
+}

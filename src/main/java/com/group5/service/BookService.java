@@ -1,0 +1,10 @@
+package com.group5.service;
+
+import java.util.List;
+
+import com.group5.model.Book;
+
+public interface BookService {
+	
+	List<Book> showAllBooks();
+}

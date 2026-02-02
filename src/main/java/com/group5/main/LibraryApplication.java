@@ -42,10 +42,14 @@ import java.util.Scanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.group5.model.*;
+import com.group5.model.User;
+import com.group5.model.Book;
+import com.group5.service.BookService;
 import com.group5.service.LibraryImpl;
 import com.group5.service.LibraryService;
+import com.group5.service.impl.BookServiceImpl;
 import com.group5.constants.Constants;
+import com.group5.dao.impl.BookDAOImpl;
 import com.group5.exception.InvalidBookException;
 
 
@@ -53,21 +57,12 @@ public class LibraryApplication {
 	private static final Logger logger =  LoggerFactory.getLogger(LibraryApplication.class);
 	
 	private User user;
-//	private Loan loan;
-	
-//	private Library library;
 	private LibraryService libraryService;
 	
 	public LibraryApplication () {
-		// initial user creation
-		this.user = new User();
-//		this.loan = new Loan();
 
-		// initial library creation
-//		this.library = new Library();
+		this.user = new User();
 		this.libraryService = new LibraryImpl();
-		libraryService.initializeList();
-		
 
 	}
 	
@@ -76,7 +71,7 @@ public class LibraryApplication {
 	// Main Application Logic, call this in your Main.java
 	public void start() {
 		
-		// add code here
+		BookService bookService = new BookServiceImpl(new BookDAOImpl());
 		
         Scanner input = new Scanner(System.in);
     	int rowCount;
@@ -103,8 +98,9 @@ public class LibraryApplication {
 	            	//[1] Display All Books
 	            	System.out.println(Constants.strDISPLAY_SELECTED_OPTION1);
 	            	logger.info("User {} selected option [1] Display All Books", user.getName());
-	            	libraryService.displayAllBooks();
-	            	//exit to menu
+	            	for (Book b: bookService.showAllBooks()) {
+	            		System.out.printf("%s | %s | %s | %b%n", b.getId(), b.getTitle(), b.getAuthor(), b.isBorrowed());
+	            	}
 	            	displayLibraryMenu();
 	            	askMenuChoice();
 	                break;
