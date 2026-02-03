@@ -47,10 +47,14 @@ import com.group5.model.Book;
 import com.group5.service.BookService;
 import com.group5.service.LibraryImpl;
 import com.group5.service.LibraryService;
+import com.group5.service.UserService;
 import com.group5.service.impl.BookServiceImpl;
+import com.group5.service.impl.UserServiceImpl;
 import com.group5.constants.Constants;
 import com.group5.dao.impl.BookDAOImpl;
+import com.group5.dao.impl.UserDAOImpl;
 import com.group5.exception.InvalidBookException;
+import com.group5.exception.InvalidUserException;
 
 
 public class LibraryApplication {
@@ -58,6 +62,7 @@ public class LibraryApplication {
 	
 	private User user;
 	private LibraryService libraryService;
+	UserService userService = new UserServiceImpl(new UserDAOImpl());
 	
 	public LibraryApplication () {
 
@@ -73,11 +78,13 @@ public class LibraryApplication {
 		
 		BookService bookService = new BookServiceImpl(new BookDAOImpl());
 		
+		
         Scanner input = new Scanner(System.in);
     	int rowCount;
     	
 
-    	inputUser(input);
+    	validateUserLogin(input);
+    	
     	welcomeMenuChoice();
     	
     	
@@ -258,6 +265,45 @@ public class LibraryApplication {
 	}
 	
 	
+	private void validateUserLogin(Scanner input) {
+		
+		boolean login = false;
+		
+		do {
+			try {
+				System.out.println(Constants.strPROMPT_USERID);
+				String userID = input.nextLine().trim();
+				
+				if (userID.trim().isEmpty() || userID == null) {
+					throw new InvalidUserException("User ID is not valid.");
+				}
+				
+				System.out.println(Constants.strPROMPT_USERNAME);
+				String username = input.nextLine().trim();
+				
+				if (username.trim().isEmpty() || username == null) {
+					throw new InvalidUserException("Username is not valid.");
+				}
+				
+				User userLogin = userService.isUserExisting(userID, username);
+				
+				if (userLogin == null) { 
+					logger.error("Invalid User ID and/or Username.");
+				}
+				
+				user = userLogin;
+				login = true;
+				
+			} catch (InvalidUserException e) {
+				System.out.println("User ID or User name is not valid.");
+			}
+
+		} while (!login);
+		
+	}
+
+
+
 	private void displayLibraryMenu() {
 		System.out.println(Constants.strDISPLAY_MENU);
 	}
