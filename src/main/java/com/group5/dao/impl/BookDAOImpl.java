@@ -34,6 +34,9 @@ public class BookDAOImpl implements BookDAO {
 	private final String FIND_BOOK_ID =
 			"SELECT id, title, author, isBorrowed FROM book WHERE id = ? AND isBorrowed = false ORDER BY id";
 	
+	private final String UPDATE_BORROW_BOOK =
+			"UPDATE book SET isBorrowed = true where id = ?";
+	
 	@Override
 	public List<Book> getAllBooks()  {
 		
@@ -150,5 +153,21 @@ public class BookDAOImpl implements BookDAO {
 			System.out.println("Encountered error on database connection. " + e);
 		}
 		return book;
+	}
+
+	@Override
+	public void updateBorrowBook(String bookId) {
+		
+		try (Connection conn = DBUtil.getConnection();
+				PreparedStatement ps = conn.prepareStatement(UPDATE_BORROW_BOOK)) {
+			
+			ps.setInt(1, Integer.valueOf(bookId));
+			ps.executeUpdate();
+			
+		} catch (SQLException e) {
+			logger.error("Encountered error on update borrow book status.");
+			System.out.println("Encountered error on update borrow book status.");
+		}
+		
 	}
 }

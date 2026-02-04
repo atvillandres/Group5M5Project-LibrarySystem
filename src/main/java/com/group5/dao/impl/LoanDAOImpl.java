@@ -40,13 +40,11 @@ public class LoanDAOImpl implements LoanDAO {
 				throw new DuplicateLoanIdException("Duplicate Loan ID.");
 			}
 			
-			
-			
 		} catch (SQLException e) {
 			logger.info("Encountered error on Loan table.");
 			System.out.println("Encountered error on Loan table.");
 		}
-		return null;
+		return loanId;
 	}
 
 	@Override

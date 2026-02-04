@@ -60,6 +60,7 @@ import com.group5.dao.impl.UserDAOImpl;
 import com.group5.exception.BookNotFoundException;
 import com.group5.exception.DuplicateLoanIdException;
 import com.group5.exception.InvalidBookException;
+import com.group5.exception.InvalidLoanIdException;
 import com.group5.exception.InvalidUserException;
 import com.group5.exception.UserCancelException;
 
@@ -69,7 +70,9 @@ public class LibraryApplication {
 	
 	private User user;
 	private LibraryService libraryService;
-	UserService userService = new UserServiceImpl(new UserDAOImpl());
+	private final UserService userService = new UserServiceImpl(new UserDAOImpl());
+	private BookService bookService = new BookServiceImpl(new BookDAOImpl());
+	private LoanService loanService = new LoanServiceImpl(new LoanDAOImpl());
 	
 	public LibraryApplication () {
 
@@ -80,13 +83,7 @@ public class LibraryApplication {
 	
 	public void start() {
 		
-		BookService bookService = new BookServiceImpl(new BookDAOImpl());
-		LoanService loanService = new LoanServiceImpl(new LoanDAOImpl());
-		
-		
         Scanner input = new Scanner(System.in);
-    	int rowCount;
-    	
 
     	validateUserLogin(input);
     	
@@ -109,7 +106,7 @@ public class LibraryApplication {
 	            	System.out.println(Constants.strDISPLAY_SELECTED_OPTION1);
 	            	logger.info("User {} selected option [1] Display All Books", user.getName());
 	            	
-	            	displayBooks(bookService.getAllBooks());
+	            	libraryService.displayAllBooks();
 	            	
 	            	displayLibraryMenu();
 	            	askMenuChoice();
@@ -120,7 +117,7 @@ public class LibraryApplication {
 	            	System.out.println(Constants.strDISPLAY_SELECTED_OPTION2);
 	            	logger.info("User {} selected option [2] Display Available Books", user.getName());
 	            	
-	            	displayBooks(bookService.getAvailableBooks());
+	            	libraryService.displayAvailableBooks();
 	            	
 	            	displayLibraryMenu();
 	            	askMenuChoice();
@@ -132,7 +129,7 @@ public class LibraryApplication {
 	            	System.out.println(Constants.strDISPLAY_SELECTED_OPTION3);
 	            	logger.info("User {} selected option [3] Display Borrowed Books", user.getName());
 
-	            	displayBooks(bookService.getBorrowedBooks());
+	            	libraryService.displayAllBorrowedBooks();
 	            	
 	            	displayLibraryMenu();
 	            	askMenuChoice();
@@ -145,62 +142,41 @@ public class LibraryApplication {
 	            	displayLibraryMenu();
 	            	System.out.println(Constants.strDISPLAY_SELECTED_OPTION4);
 	            	logger.info("User {} selected option [4] Borrow Book", user.getName());
-	            	
-	            	System.out.println("List of available books.");
-	            	for (Book b: bookService.getAvailableBooks()) {
-	            		System.out.printf("%s | %s | %s%n", b.getId(), b.getTitle(), b.getAuthor());
-	            	}
-	            	
-	            	System.out.println(Constants.strPROMPT_ENTER_BOOKID);
-	            	String bookId = input.nextLine();
-	            	
-	            	Book findBookId = bookService.findById(bookId);
-	            	
-	            	try {
+	            	do {
 	            		
-	            		if (findBookId == null) {
-	            			logger.error("Invalid Book ID: {}", bookId);
-	            			throw new BookNotFoundException("Book ID not found.");
+	            		try {
+	            			
+	            			System.out.println("List of available books.");
+	    	            	for (Book b: bookService.getAvailableBooks()) {
+	    	            		System.out.printf("%s | %s | %s%n", b.getId(), b.getTitle(), b.getAuthor());
+	    	            	}
+	            			
+	            			Book book = validateBookId(input);
+	            			validateLoanId(input, book);
+	            			
+	            		} catch (UserCancelException e) {
+	            			
+	            			System.out.println(e.getMessage());
+	            			break;
+	            			
+	            		} catch (BookNotFoundException e) {
+	            			
+	            			System.out.println(e.getMessage());
+	            			continue;
+	            			
+	            		} catch (NumberFormatException e) {
+	            			
+	            			System.out.println(e.getMessage());
+	            			continue;
+	            		
+	            		} catch (InvalidLoanIdException e) {
+	            			
+	            			System.out.println(e.getMessage());
+	            			continue;
 	            		}
 	            		
-	            	} catch (BookNotFoundException e) {
-	            		System.out.println(e.getMessage());
-	            		break;
-	            	}
+	            	} while (true);
 	            	
-	            	System.out.println(Constants.strPROMPT_ENTER_LOANID);
-	            	String loanId = input.nextLine();
-	            	
-	            	try {
-	            		
-	            		String loan = loanService.findLoanId(loanId);
-	            		loanService.addLoanBook(loanId, String.valueOf(findBookId.getId()), String.valueOf(user.getId()));
-	            		
-	            	} catch (DuplicateLoanIdException e) {
-	            		logger.error("Duplicate Loan ID: {}", loanId);
-	            		System.out.println(e.getMessage());
-	            		break;
-	            	}
-	            	
-
-	            	
-	            	
-//	            	
-//	            	
-//	            	rowCount = libraryService.displayAvailableBooks();
-//	            	
-//	            	if (rowCount > 0) {
-//		            	String bookIdChoice = askBookChoice(input);
-//		            	if (bookIdChoice != "") {
-//		            		//book found, ask user to input loan ID
-//		            		String createdLoanId = askLoanId(input);
-//		            		if (createdLoanId != "") {
-//		            			logger.info("User {} generated Loan ID: {}", user.getName(), createdLoanId);
-//			            		libraryService.borrowBook(createdLoanId, user, bookIdChoice);
-//		            		}
-//		            	}
-//	            	}
-            		//exit to menu
 	            	displayLibraryMenu();
 	            	askMenuChoice();
 	                break;
@@ -213,15 +189,7 @@ public class LibraryApplication {
 	            	String bookTitle = input.nextLine();
 	            	
 	            	logger.info("User {} selected option [5] Return Book", user.getName());
-	            	rowCount = libraryService.displayAllLoans();
-	            	if (rowCount > 0) {
-		            	String loanChoice = askLoanIdForReturn(input);
-		            	if (loanChoice != "") {
-		            		//loan found, ask user to input loan ID
-			            	this.libraryService.returnBook(loanChoice);
-		            	}
-	            	}
-	            	//exit to menu
+
 	            	displayLibraryMenu();
 	            	askMenuChoice();
 	                break;
@@ -265,16 +233,7 @@ public class LibraryApplication {
 	            	//[7] Remove Book
 	                System.out.println(Constants.strDISPLAY_SELECTED_OPTION7);
 	                logger.info("User {} selected option [7] Remove Book", user.getName());
-	            	rowCount = libraryService.displayAllBooks();
-	            	if (rowCount > 0) {
-		            	String bookIdChoice = askBookChoiceForRemoval(input);
-		            	if (bookIdChoice != "") {
-		            		//book found, delete book
-		            		libraryService.deleteBook(bookIdChoice);
-		            		logger.info("User {} successfully removed book with book ID: {}", user.getName(), bookIdChoice);
-		            	}
-	            	} 
-	            	//exit to menu
+
 	            	displayLibraryMenu();
 	            	askMenuChoice();
 	                break;
@@ -284,21 +243,7 @@ public class LibraryApplication {
 	            	//[8] Update Book
 	                System.out.println(Constants.strDISPLAY_SELECTED_OPTION8);
 	                logger.info("User {} selected option [8] Update Book", user.getName());
-	            	rowCount = libraryService.displayAllBooks();
-	            	if (rowCount > 0) {
-	            		String bookIdChoice = askBookChoice(input);
-		            	if (bookIdChoice != "") {
-		            		//book found, ask user to input the updated book title and author
-		            		Book updatedBook = askUpdatedBook(input, bookIdChoice);
-		            		if (updatedBook != null) {
-			            		libraryService.updateBook(updatedBook);
-			            		logger.info("User {} updated the Book ID: {} to {}.", user.getName(),
-			            				bookIdChoice,
-			            				updatedBook.getTitle());
-		            		}
-		            	}
-	            	}
-	            	//exit to menu
+
 	            	displayLibraryMenu();
 	            	askMenuChoice();
 	                break;
@@ -325,11 +270,65 @@ public class LibraryApplication {
 	}
 	
 	
-	private void displayBooks(List<Book> books) {
-		System.out.println("List of all books.");
-    	for (Book b: books) {
-    		System.out.printf("%s | %s | %s%n", b.getId(), b.getTitle(), b.getAuthor());
-    	}		
+	private void validateLoanId(Scanner input, Book book) throws UserCancelException,InvalidLoanIdException {
+
+		System.out.println(Constants.strPROMPT_ENTER_LOANID);
+    	String loanId = input.nextLine();
+    	
+    	if (loanId.equalsIgnoreCase("x")) {
+    		logger.error("User {} selected x. Going back to main menu.", user.getName());
+    		throw new UserCancelException(Constants.strERROR_MAIN_MENU);
+    	}
+    	
+    	if (loanId.trim().isEmpty()) {
+    		logger.error("Loan ID cannot be null or empty.");
+    		throw new InvalidLoanIdException("Loan ID cannot be null or empty.");
+    	}
+    	
+    	if (!loanId.matches("\\d+")) {
+    		logger.error("Loan ID must be numeric.");
+    		throw new NumberFormatException("Loan ID must be numeric");
+    	}
+    	
+    	try {
+    		
+    		String loan = loanService.findLoanId(loanId);
+    		loanService.addLoanBook(loan, String.valueOf(book.getId()), String.valueOf(user.getId()));
+    		bookService.updateBorrowBook(book.getId());
+    		
+    	} catch (DuplicateLoanIdException e) {
+    		logger.error("Duplicate Loan ID: {}", loanId);
+    		System.out.println(e.getMessage());
+    	}
+	}
+
+	private Book validateBookId(Scanner input) throws BookNotFoundException, UserCancelException {
+		
+		System.out.println(Constants.strPROMPT_ENTER_BOOKID);
+    	String bookId = input.nextLine();
+    	
+    	if (bookId.equalsIgnoreCase("x")) {
+    		logger.error("User {} selected x. Going back to main menu.", user.getName());
+    		throw new UserCancelException(Constants.strERROR_MAIN_MENU);
+    	}
+    	
+		if (bookId.trim().isEmpty()) {
+			logger.error("Book ID cannot be empty or null.");
+			throw new BookNotFoundException("Book ID not found.");
+		}
+		
+		if (!bookId.matches("\\d+")) {
+			logger.error("Book ID must be numeric.");
+			throw new NumberFormatException("Book ID must be numeric.\n");
+		}
+		
+		Book findBookId = bookService.findById(bookId);
+		
+		if (findBookId == null ) {
+			throw new BookNotFoundException("Invalid Book ID number.");
+		}
+		
+		return findBookId;
 	}
 
 	private String validateAuthor(Scanner input) throws InvalidBookException, UserCancelException {
@@ -356,25 +355,21 @@ public class LibraryApplication {
 
 	private String validateTitle(Scanner input) throws InvalidBookException, UserCancelException {
 		
-		do {
-			
-			System.out.println(Constants.strPROMPT_ENTER_BOOKTITLE);
-	    	String title = input.nextLine();
-	    	
-	    	
-			if (title.trim().isEmpty() || title == null) {
-				logger.warn("Title cannot be null.");
-				throw new InvalidBookException("Title cannot be null or empty");
-			}
-			
-			if (title.equalsIgnoreCase("x")) {
-				logger.warn("User {} selected x. Going back to main menu.", user.getName());
-				throw new UserCancelException(Constants.strERROR_MAIN_MENU);
-			}
-			
-			return title;
-			
-		} while (true);
+		System.out.println(Constants.strPROMPT_ENTER_BOOKTITLE);
+		String title = input.nextLine();
+
+		if (title.trim().isEmpty() || title == null) {
+			logger.warn("Title cannot be null.");
+			throw new InvalidBookException("Title cannot be null or empty");
+		}
+
+		if (title.equalsIgnoreCase("x")) {
+			logger.warn("User {} selected x. Going back to main menu.", user.getName());
+			throw new UserCancelException(Constants.strERROR_MAIN_MENU);
+		}
+
+		return title;
+
 	}
 
 	private void validateUserLogin(Scanner input) {
@@ -433,395 +428,6 @@ public class LibraryApplication {
     	System.out.print(Constants.strPROMPT_CHOICE);
 	}
 
-	private String askBookChoice(Scanner input) {
-		String ret = "";
-		String tempInput;
-    	String prompt = Constants.strPROMPT_ENTER_BOOKID;
-
-    	//user input (Book id to be borrowed)
-    	boolean bookFound = false;
-    	
-    	
-    	do {
-    		
-    		tempInput = validateInput(input, prompt);
-    		if (tempInput != null) {
-    			
-        		if (tempInput.equalsIgnoreCase("X")) {
-	        		bookFound = true;
-	        		System.out.println(" Going back to main menu.");
-	        		logger.info("User {}, selected X in Book ID choice. Going back to main menu.", user.getName());
-	        		break;
-
-        		} else {
-	            	bookFound = libraryService.findBook(tempInput);
-	            	logger.info("User {} searched Book ID: {}", user.getName(), tempInput);
-
-	            	if (bookFound) {
-	        			//check if currently loaned
-	            		if (libraryService.isBookBorrowed(tempInput)) {
-	        				//currently borrowed
-	        				System.out.print (Constants.strERROR_BOOK_OUT);
-	        				logger.warn("Book ID: {} is currently borrowed.", tempInput);
-	        				bookFound = false;
-	        			} else {
-			        		ret = tempInput;
-			        		bookFound = true;
-			        		break;
-	        			}
-	        		} else {
-	        			System.out.print (Constants.strERROR_BOOK_NOT_FOUND);
-	        			logger.error("Book ID: not found.", tempInput);
-	        		}
-	        	}
-    		}
-    	} while (!bookFound);
-
-    	return ret;
-	}
-	
-	
-	private String askLoanId(Scanner input) {
-		String ret = "";
-		String tempInput;
-		String prompt = Constants.strPROMPT_ENTER_LOANID ;
-    	//user input (loan id for borrowing)
-    	boolean loanSearch = false;
-    	
-    	
-    	do {
-    		tempInput = validateInput(input, prompt);
-    		if (tempInput != null) {
-	        	if (tempInput.equalsIgnoreCase("X")) {
-	        		loanSearch = true;
-	        		System.out.println("Going back to main menu.");
-	        		logger.warn("User {} selected X in Loan ID. Going back to main menu.", user.getName());
-	        		break;
-	        	} else {
-	        		loanSearch = libraryService.findLoan(tempInput);
-	        		
-	        		if (loanSearch) {
-	        			System.out.print (Constants.strINVALID_LOAN_ID_FOUND);
-	        			loanSearch = false;
-	        		} else {
-	        			//valid loan ID
-	        			ret = tempInput;
-		        		loanSearch = true;
-		        		break;
-	        			
-	        		}
-	        	}
-    		}
-    		
-    	} while (!loanSearch);
-
-    	return ret;
-
-	}
-	
-	
-	private String askLoanIdForReturn(Scanner input) {
-		String ret = "";
-		String tempInput;
-		String prompt = Constants.strPROMPT_ENTER_LOANID ;
-    	//user input (loan id for borrowing)
-    	boolean loanSearch = false;
-    	
-    	
-    	do {
-    		tempInput = validateInput(input, prompt);
-    		logger.info("User {}, search for Loan ID: {}.", user.getName(), tempInput);
-    		if (tempInput != null) {
-        		if (tempInput.equalsIgnoreCase("X")) {
-	        		loanSearch = true;
-	        		System.out.println("Going back to main menu.");
-	        		logger.warn("User {} selected x. Going back to main menu.", user.getName());
-	        		break;
-	        	} else {
-	        		loanSearch = libraryService.findLoan(tempInput);
-	        		
-	        		if (!loanSearch) {
-	        			System.out.print (Constants.strINVALID_LOAN_ID);
-	        			logger.warn("Loan ID: {} not found", tempInput);
-	        			loanSearch = false;
-	        		} else {
-	        			//valid loan ID
-	        			ret = tempInput;
-	        			logger.info("Loan ID: {} Found.",tempInput);
-		        		loanSearch = true;
-		        		break;
-	        		}
-	        	}
-    		}
-
-    	} while (!loanSearch);
-
-    	return ret;
-
-	}
-	
-	// Updated inputNewBook method added logging and exception handling 01.19.2026
-	private Book inputNewBook(Scanner input) throws InvalidBookException { // inputNewBook Method Start 01.19.2026
-		
-		
-		Book book = null;
-		boolean isInputValid = false;
-		String bookId = null;
-		String bookTitle = null;
-		String bookAuthor = null;
-		
-		String tempInput;
-		String prompt = "";
-		
-		logger.info("User {} selected option 6 Add book", user.getName());
-		
-		//input book ID
-		prompt = Constants.strPROMPT_ENTER_BOOKID ;
-		do {
-			tempInput = validateInput(input, prompt);
-			if (tempInput != null) {
-				if (tempInput.equalsIgnoreCase("X")) {
-	        		isInputValid = true;
-	        		break;
-				} else if (tempInput.length() > Constants.maxLenBookId) {
-	        		isInputValid = false;
-	        		System.out.print (Constants.strERROR_INVALID_INPUT);
-	        		logger.warn("User {} entered book ID: {}, Invalid input, Book ID length cannot be more than 7", user.getName(), tempInput);  // Added logger warn 01.19.2026
-	        		
-	        		//throw new InvalidBookException("Book ID length cannot be more than 7"); // commented, will exit the loop 01.19.2026
-	        	} else {
-	        		isInputValid = libraryService.findBook(tempInput);
-	            	if (isInputValid) {
-	    				System.out.print (Constants.strERROR_BOOK_EXIST);
-		        		logger.warn("User {} entered book ID: {}, Invalid! Book ID already exists.",user.getName(), tempInput); // added logger warn 01.19.2026
-	    				isInputValid = false;
-		        		//throw new InvalidBookException("Book ID "+ tempInput+" already exists"); // commented, will exit the loop 01.19.2026
-	    				
-	    			} else {
-	    				bookId = tempInput;
-	    				logger.info("User {} inputted {} for book ID",user.getName(), tempInput);
-	    				isInputValid = true;
-		        		break;
-	    			}
-	        	}
-			}
-		} while (!isInputValid);
-
-        
-		if (!tempInput.equalsIgnoreCase("X")) {
-			
-			//allow input book Title
-	
-	        isInputValid = false;
-			prompt = Constants.strPROMPT_ENTER_BOOKTITLE ;
-			
-			do {
-				tempInput = validateInput(input, prompt);
-	
-				if (tempInput != null) {
-					
-					if (tempInput.equalsIgnoreCase("X")) {
-		        		isInputValid = true;
-		        		break;
-					} else {
-						bookTitle = tempInput;
-	    				logger.info("User {} inputted {} for book title",user.getName(), tempInput);
-						isInputValid = true;
-		        		break;
-					}
-				}
-				
-			} while (!isInputValid);
-		}else {
-			throw new InvalidBookException("Adding new book failed, user inputted "+ tempInput);
-		}
-		
-
-        
-		if (!tempInput.equalsIgnoreCase("X")) {
-	
-			//allow input book Author
-	        isInputValid = false;
-	        prompt = Constants.strPROMPT_ENTER_BOOKAUTHOR ;
-	        
-	        do {
-	        	tempInput = validateInput(input, prompt);
-	        	if (tempInput != null) {
-					if (tempInput.equalsIgnoreCase("X")) {
-		        		isInputValid = true;
-		        		break;
-					} else {
-						bookAuthor = tempInput;
-	    				logger.info("User {} inputted {} for book author",user.getName(), tempInput);
-						isInputValid = true;
-		        		break;
-					}
-	        	}
-	        } while (!isInputValid);
-		}else {
-			throw new InvalidBookException("Adding new book failed, user inputted "+ tempInput);
-		}
-		
-		try {
-	        //create Book 
-	        if ((bookId != null && bookTitle !=null && bookAuthor != null)) {
-	        	if (!(bookId.equalsIgnoreCase("X") || bookTitle.equalsIgnoreCase("X") || bookAuthor.equalsIgnoreCase("X"))) {
-	                book = new Book(bookId, bookTitle, bookAuthor, false);
-	                // Added logger info 01.19.2026
-	                logger.info("Book ID {} entitled {} created successfully by {}", bookId,  bookTitle, user.getName()); 
-	        	} 
-	        }else {
-	        	throw new InvalidBookException("Book ID, Title or Author cannot be null or empty"); // added throw InvalidBookException for null and empty 01.19.2026
-	        }
-	        
-		}catch(IllegalArgumentException e) {
-			logger.error("Failed to create book due to invalid argument", e);
-			
-			throw new InvalidBookException("Adding new book failed", e);
-		}
-	
-		return book;
-	} // inputNewBook Method End
-	
-	
-	private String askBookChoiceForRemoval(Scanner input) {
-		String ret = "";
-		String tempInput;
-    	String prompt = Constants.strPROMPT_ENTER_BOOKID;
-
-    	//user input (Book id to be removed)
-    	boolean bookFound = false;
-    	
-    	
-    	do {
-    		
-    		tempInput = validateInput(input, prompt);
-    		if (tempInput != null) {
-    			
-        		if (tempInput.equalsIgnoreCase("X")) {
-        			// Added logger for book id input to be removed and user inputted x
-        			logger.info("User {} inputted character to be returned to main menu: {}", user.getName(), tempInput);
-	        		bookFound = true;
-	        		break;
-
-        		} else {
-	            	bookFound = libraryService.findBook(tempInput);
-
-	            	if (bookFound) {
-	            		// Added logger for book id input to be removed and book is found
-	            		logger.info("User {} inputted Book ID: {} to be removed. Book is found", user.getName(), tempInput);
-		        		ret = tempInput;
-		        		bookFound = true;
-		        		break;
-	        		} else {
-	        			System.out.print (Constants.strERROR_BOOK_NOT_FOUND);
-	        			// Added logger for book id input to be removed and book is not found
-	        			logger.info("User {} inputted Book ID: {} to be removed. Book is not found", user.getName(), tempInput);
-	        		}
-	        	}
-    		}
-    	} while (!bookFound);
-
-    	return ret;
-	}
-	
-	
-	private Book askUpdatedBook(Scanner input, String bookId) {
-		Book book = null;
-		boolean isInputValid = false;
-		String bookTitle = null;
-		String bookAuthor = null;
-		
-		String tempInput;
-		String prompt = "";
-		
-		//input book Title
-        isInputValid = false;
-		prompt = Constants.strPROMPT_ENTER_BOOKTITLE ;
-		do {
-			tempInput = validateInput(input, prompt);
-
-			if (tempInput != null) {
-				
-				if (tempInput.equalsIgnoreCase("X")) {
-	        		isInputValid = true;
-	        		System.out.println("Going back to main menu.");
-	        		logger.info("User {}, selected X in Book Title. Going back to main menu.", user.getName());
-	        		break;
-				} else {
-					bookTitle = tempInput;
-					isInputValid = false;
-	        		break;
-				}
-			}
-			
-		} while (!isInputValid);
-
-        
-		if (!tempInput.equalsIgnoreCase("X")) {
-	
-			//allow input book Author
-	        isInputValid = false;
-	        prompt = Constants.strPROMPT_ENTER_BOOKAUTHOR ;
-	        
-	        do {
-	        	tempInput = validateInput(input, prompt);
-	        	if (tempInput != null) {
-					if (tempInput.equalsIgnoreCase("X")) {
-		        		isInputValid = true;
-		        		System.out.println("Going back to main menu.");
-		        		logger.info("User {}, selected X in Book Author. Going back to main menu.", user.getName());
-		        		break;
-					} else {
-						bookAuthor = tempInput;
-						isInputValid = false;
-						book = new Book(bookId, bookTitle, bookAuthor, false);
-						return book;
-					}
-	        	}
-	        } while (!isInputValid);
-		}
-		
-		return null;
-	}
-	
-	private void inputUser (Scanner input)  {
-		boolean isInputValid;
-		String tempInput;
-		String prompt = "";
-		
-		//userId
-		isInputValid = false;
-		prompt = Constants.strPROMPT_USERID ;
-    	do {
-    		tempInput = validateInput(input, prompt);
-    		if (tempInput != null) {
-    			isInputValid = true;
-    			user.setId(tempInput);
-    		}
-    	} while (!isInputValid);
-    	
-    	//userName
-    	isInputValid = false;
-		prompt = Constants.strPROMPT_USERNAME ;
-    	do {
-    		tempInput = validateInput(input, prompt);
-    		
-    		if (tempInput != null) {
-        		if (tempInput.length() > Constants.maxLenUserName) {
-            		isInputValid = false;
-            		System.out.print (Constants.strERROR_INVALID_INPUT);
-        		} else {
-        			isInputValid = true;
-        			user.setName(tempInput);
-        			logger.info("User {} has logged in.", user.getName());
-        		}
-    		}
-    	} while (!isInputValid);
-
-	}
-
-	
 	private char getMenuChoice (Scanner input) {
 		String tempInput = input.nextLine().trim();
     	char option;
@@ -835,56 +441,5 @@ public class LibraryApplication {
     	
     	return option;
 	}
-	
-	
-	private String validateInput(Scanner input, String prompt) { 
-		String ret = null;
-		String tempInput;
-    	boolean isValid = false;
-    	
-        do {
-        	System.out.print(prompt);
-            tempInput = input.nextLine().trim();
-            
-        	//check the input
-        	if ((tempInput == null) || (tempInput == "") ) {
-        		isValid = false;
-    			System.out.print (Constants.strERROR_INVALID_INPUT);
-    			
-    			// Added logger warn for null or empty input
-    			logger.warn("Input cannot be null or empty.");
-        	} else {
-    			//valid input
-    			ret = tempInput;
-    			isValid = true;
-        		break;
-        	}
-
-        } while (!isValid);
-
-    	return ret;
-		
-	}
-	
-	
-    private final static boolean isNumeric(String string){
-    	final String acceptedChars = "0123456789";
-		boolean result = true;
-
-		char[] chars = string.toCharArray();
-    	for (int i = 0; i < chars.length; i++){
-    		char c = chars[i];
-        	if(acceptedChars.indexOf((c+"").toUpperCase()) < 0){
-        		result = false;
-        	}
-    		if(!result){
-    			return false;
-    		}
-    	}
-    	return true;
-    }
-
-    
-	// add code here
 	
 }

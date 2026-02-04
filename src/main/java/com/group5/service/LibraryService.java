@@ -1,35 +1,18 @@
 package com.group5.service;
 
-import com.group5.model.*;
-
-
 public interface LibraryService {
 	
-	public Library initializeList();
+	public void displayAllBooks();
 	
-	public int displayAllBooks();
+	public void displayAvailableBooks();
 	
-	public int displayAvailableBooks();
+	public void displayAllBorrowedBooks();
 	
-	public int displayAllBorrowedBooks(User user);
+	public static int displayTableDetails(int displayType) {
+		return 0;
+	}
 	
-	public int displayAllLoans();
+	public static void displayTableHeader(int displayType) {
+	}
 	
-	public Library borrowBook(String loanId, User user, String bookId);
-	
-	public Library returnBook(String loanChoice);
-	
-	public Library addBook(Book book, User user);
-
-	public Library deleteBook(String bookId);
-
-	public Library updateBook(Book book);
-
-	public boolean findBook(String bookId);
-
-	public boolean isBookBorrowed(String bookId);
-
-	public boolean findLoan(String loanId);
-
-		
 }

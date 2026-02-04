@@ -38,4 +38,9 @@ public class BookServiceImpl implements BookService {
 		return bookDAO.findById(bookId);
 	}
 
+	@Override
+	public void updateBorrowBook(String bookID) {
+		bookDAO.updateBorrowBook(bookID);
+	}
+
 }
