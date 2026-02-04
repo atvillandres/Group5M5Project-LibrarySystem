@@ -58,18 +58,6 @@ public class LibraryImpl implements LibraryService {
 			throw new RuntimeException("Failed to connect to database." + e);
 		}
 
-		//initialize 5 books
-//		for (int i = 0; i < initialbookcnt; i++) {
-//			switch (i) {
-//				case 0: book = new Book("B1", "And Then There Were None",        "Agatha Christie",    false); break;
-//				case 1: book = new Book("B2", "The Big Sleep",                   "Raymond Chandler",   false); break;
-//				case 2: book = new Book("B3", "The Hound of the Baskervilles",   "Arthur Conan Doyle", false); break;
-//				case 3: book = new Book("B4", "The Da Vinci Code",               "Dan Brown" ,         false); break;
-//				case 4: book = new Book("B5", "The Girl with the Dragon Tattoo", "Stieg Larsson",      false); break;
-//			}
-//			bookList.add(book);
-//		}
-
 		//empty loan list
 		loanList = new ArrayList<>();
 

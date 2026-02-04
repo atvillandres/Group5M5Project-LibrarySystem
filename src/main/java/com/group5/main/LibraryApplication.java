@@ -42,51 +42,48 @@ import java.util.Scanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.group5.model.*;
+import com.group5.model.User;
+import com.group5.model.Book;
+import com.group5.service.BookService;
 import com.group5.service.LibraryImpl;
 import com.group5.service.LibraryService;
+import com.group5.service.UserService;
+import com.group5.service.impl.BookServiceImpl;
+import com.group5.service.impl.UserServiceImpl;
 import com.group5.constants.Constants;
+import com.group5.dao.impl.BookDAOImpl;
+import com.group5.dao.impl.UserDAOImpl;
 import com.group5.exception.InvalidBookException;
+import com.group5.exception.InvalidUserException;
 
 
 public class LibraryApplication {
 	private static final Logger logger =  LoggerFactory.getLogger(LibraryApplication.class);
 	
 	private User user;
-//	private Loan loan;
-	
-//	private Library library;
 	private LibraryService libraryService;
+	UserService userService = new UserServiceImpl(new UserDAOImpl());
 	
 	public LibraryApplication () {
-		// initial user creation
-		this.user = new User();
-//		this.loan = new Loan();
 
-		// initial library creation
-//		this.library = new Library();
+		this.user = new User();
 		this.libraryService = new LibraryImpl();
-		libraryService.initializeList();
-		
 
 	}
 	
-	
-	
-	// Main Application Logic, call this in your Main.java
 	public void start() {
 		
-		// add code here
+		BookService bookService = new BookServiceImpl(new BookDAOImpl());
+		
 		
         Scanner input = new Scanner(System.in);
     	int rowCount;
     	
 
-    	inputUser(input);
+    	validateUserLogin(input);
+    	
     	welcomeMenuChoice();
     	
-    	
-    	//initially display the menu
     	displayLibraryMenu();
     	askMenuChoice();
 
@@ -103,8 +100,9 @@ public class LibraryApplication {
 	            	//[1] Display All Books
 	            	System.out.println(Constants.strDISPLAY_SELECTED_OPTION1);
 	            	logger.info("User {} selected option [1] Display All Books", user.getName());
-	            	libraryService.displayAllBooks();
-	            	//exit to menu
+	            	for (Book b: bookService.showAllBooks()) {
+	            		System.out.printf("%s | %s | %s | %b%n", b.getId(), b.getTitle(), b.getAuthor(), b.isBorrowed());
+	            	}
 	            	displayLibraryMenu();
 	            	askMenuChoice();
 	                break;
@@ -262,6 +260,48 @@ public class LibraryApplication {
 	}
 	
 	
+	private void validateUserLogin(Scanner input) {
+		
+		boolean login = false;
+		
+		do {
+			try {
+				System.out.println(Constants.strPROMPT_USERID);
+				String userID = input.nextLine().trim();
+				
+				if (userID.trim().isEmpty() || userID == null) {
+					logger.warn("User ID is not valid");
+					throw new InvalidUserException("User ID is not valid.");
+				}
+				
+				System.out.println(Constants.strPROMPT_USERNAME);
+				String username = input.nextLine().trim();
+				
+				if (username.trim().isEmpty() || username == null) {
+					logger.warn("Username is not valid");
+					throw new InvalidUserException("Username is not valid.");
+				}
+				
+				User userLogin = userService.isUserExisting(userID, username);
+				
+				if (userLogin == null) { 
+					logger.error("Invalid User ID and/or Username.");
+				}
+				
+				user = userLogin;
+				login = true;
+				logger.info("{} successfully login.", user.getName());
+				
+			} catch (InvalidUserException e) {
+				System.out.println("User ID or User name is not valid.");
+			}
+
+		} while (!login);
+		
+	}
+
+
+
 	private void displayLibraryMenu() {
 		System.out.println(Constants.strDISPLAY_MENU);
 	}
