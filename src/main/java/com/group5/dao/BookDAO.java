@@ -13,5 +13,6 @@ public interface BookDAO {
 		Book findById(String bookId);
 		void updateBorrowBook(String bookId);
 		void deleteBook(String bookId);
+		void updateBook(Book book);
 		
 }

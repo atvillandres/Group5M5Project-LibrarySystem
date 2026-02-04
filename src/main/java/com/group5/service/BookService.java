@@ -13,4 +13,5 @@ public interface BookService {
 	Book findById(String bookId);
 	void updateBorrowBook(String bookID);
 	void deleteBook(String bookID);
+	void updateBook(Book book);
 }

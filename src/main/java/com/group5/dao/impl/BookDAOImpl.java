@@ -40,6 +40,9 @@ public class BookDAOImpl implements BookDAO {
 	private final String DELETE_BOOK =
 			"DELETE FROM book WHERE id = ?";
 	
+	private final String UPDATE_BOOK =
+			"UPDATE book SET title = ?, author = ? WHERE id = ?";
+	
 	@Override
 	public List<Book> getAllBooks()  {
 		
@@ -185,6 +188,24 @@ public class BookDAOImpl implements BookDAO {
 			
 		} catch (SQLException e) {
 			System.out.println("Encountered error on deleting a book.");
+		}
+	}
+
+	@Override
+	public void updateBook(Book book) {
+		
+		try (Connection conn = DBUtil.getConnection();
+				PreparedStatement ps = conn.prepareStatement(UPDATE_BOOK)) {
+			
+			ps.setString(1, book.getTitle());
+			ps.setString(2, book.getAuthor());
+			ps.setInt(3, Integer.valueOf(book.getId()));
+			
+			ps.executeUpdate();
+		
+		} catch (SQLException e) {
+			System.out.println(e.getMessage());
+			logger.error(e.getMessage());
 		}
 	}
 }
