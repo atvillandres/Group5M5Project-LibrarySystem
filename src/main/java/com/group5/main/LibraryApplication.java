@@ -292,8 +292,13 @@ public class LibraryApplication {
     	
     	try {
     		
+    		logger.info("User {}, input Loan ID: {}", user.getName(), loanId);
     		String loan = loanService.findLoanId(loanId);
+    		
+    		logger.info("User {}, adding {} with loan ID: {}.", user.getName(), book.getTitle(), loanId);
     		loanService.addLoanBook(loan, String.valueOf(book.getId()), String.valueOf(user.getId()));
+    		
+    		logger.info("Updating Book {} to be borrowed by {}", book.getTitle(), user.getName());
     		bookService.updateBorrowBook(book.getId());
     		
     	} catch (DuplicateLoanIdException e) {
@@ -322,9 +327,12 @@ public class LibraryApplication {
 			throw new NumberFormatException("Book ID must be numeric.\n");
 		}
 		
+		logger.info("User {} searched for Book ID: {}", user.getName(), bookId);
 		Book findBookId = bookService.findById(bookId);
 		
+		
 		if (findBookId == null ) {
+			logger.error("Invalid Book ID Number.");
 			throw new BookNotFoundException("Invalid Book ID number.");
 		}
 		
