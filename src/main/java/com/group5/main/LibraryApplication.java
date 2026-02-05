@@ -44,6 +44,7 @@ import org.slf4j.LoggerFactory;
 
 import com.group5.model.User;
 import com.group5.model.Book;
+import com.group5.model.Loan;
 import com.group5.service.BookService;
 import com.group5.service.LibraryImpl;
 import com.group5.service.LibraryService;
@@ -59,6 +60,7 @@ import com.group5.dao.impl.UserDAOImpl;
 import com.group5.exception.BookNotFoundException;
 import com.group5.exception.DuplicateLoanIdException;
 import com.group5.exception.InvalidBookException;
+import com.group5.exception.InvalidBorrowedBookIdException;
 import com.group5.exception.InvalidLoanIdException;
 import com.group5.exception.InvalidUserException;
 import com.group5.exception.UserCancelException;
@@ -146,6 +148,7 @@ public class LibraryApplication {
 	            	try {
 	            		Book book = validateBookId(input);
 	            		validateLoanId(input, book);
+	            		System.out.println(user.getName() + " successfully loaned " + book.getTitle());
 	            		
 	            	} catch (UserCancelException e) {
 	            		logger.warn(e.getMessage());
@@ -168,11 +171,18 @@ public class LibraryApplication {
 
 	            	try {
 	            		
-	            		String bookId = validateBorrowedBook(input);
+	            		Loan loan = validateBorrowedBook(input);
+	            		
+	            		System.out.println(loan.toString());
+	            		bookService.updateReturnBook(loan.getBookId());
+	            		logger.info("Updating borrow status of book id: {}.", loan.getBookId());
+	            		
+	            		loanService.deleteLoanId(loan.getLoanId());
+	            		logger.info("Removing Loan ID: {} in Loan table.", loan.getLoanId());
 	            		
 	            	} catch (UserCancelException e) {
 	            		logger.error(e.getMessage());
-	            	}
+	            	} 
 	            	
 	            	displayLibraryMenu();
 	            	askMenuChoice();
@@ -289,7 +299,8 @@ public class LibraryApplication {
 		
 	}
 	
-private String validateBorrowedBook(Scanner input) throws UserCancelException {
+private Loan validateBorrowedBook(Scanner input) throws UserCancelException {
+	
 	do {
 		try {
 			System.out.println("Please enter Book ID: ");
@@ -307,14 +318,33 @@ private String validateBorrowedBook(Scanner input) throws UserCancelException {
 				throw new NumberFormatException("Book ID must be numeric.");
 			}
 			
-			String loanId = loanService.findReturnBookId(bookId);
-			System.out.println("loan id is " + loanId);
+			Loan loan = loanService.findReturnBookId(bookId);
+			
+			if (loan == null) {
+				throw new NullPointerException("Invalid Book ID.");
+			}
+			
+			logger.info("Validating borrowed book with Book ID: {} and Loan ID: {}.", bookId, loan.getLoanId());
+			
+			return loan;
 			
 		} catch (InvalidBookException e) {
 			System.out.println(e.getMessage());
+			logger.error(e.getMessage());
+			
 		} catch (NumberFormatException e) {
 			System.out.println(e.getMessage());
+			logger.error(e.getMessage());
+			
+		} catch (NullPointerException e) {
+			System.out.println(e.getMessage());
+			logger.error(e.getMessage());
+			
+		} catch (InvalidBorrowedBookIdException e) {
+			System.out.println(e.getMessage());
+			logger.error(e.getMessage());
 		}
+		
 	} while (true);
 }
 
