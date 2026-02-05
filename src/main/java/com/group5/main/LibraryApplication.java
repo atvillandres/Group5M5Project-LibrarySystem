@@ -55,6 +55,7 @@ import com.group5.dao.impl.BookDAOImpl;
 import com.group5.dao.impl.UserDAOImpl;
 import com.group5.exception.InvalidBookException;
 import com.group5.exception.InvalidUserException;
+import com.group5.exception.UserCancelException;
 
 
 public class LibraryApplication {
@@ -100,21 +101,24 @@ public class LibraryApplication {
 	            	//[1] Display All Books
 	            	System.out.println(Constants.strDISPLAY_SELECTED_OPTION1);
 	            	logger.info("User {} selected option [1] Display All Books", user.getName());
-	            	for (Book b: bookService.showAllBooks()) {
-	            		System.out.printf("%s | %s | %s | %b%n", b.getId(), b.getTitle(), b.getAuthor(), b.isBorrowed());
+	            	
+	            	for (Book b: bookService.getAllBooks()) {
+	            		System.out.printf("%s | %s | %s%n", b.getId(), b.getTitle(), b.getAuthor());
 	            	}
+	            	
 	            	displayLibraryMenu();
 	            	askMenuChoice();
 	                break;
 	
-	                
 	            case '2':
 	            	//[2] Display Available Books
 	            	System.out.println(Constants.strDISPLAY_SELECTED_OPTION2);
 	            	logger.info("User {} selected option [2] Display Available Books", user.getName());
-	            	libraryService.displayAvailableBooks();
 	            	
-	            	//exit to menu
+	            	for (Book b: bookService.getAvailableBooks()) {
+	            		System.out.printf("%s | %s | %s%n", b.getId(), b.getTitle(), b.getAuthor());
+	            	}
+	            	
 	            	displayLibraryMenu();
 	            	askMenuChoice();
 	                break;
@@ -124,8 +128,11 @@ public class LibraryApplication {
 	            	//[3] Display All Borrowed Books 
 	            	System.out.println(Constants.strDISPLAY_SELECTED_OPTION3);
 	            	logger.info("User {} selected option [3] Display Borrowed Books", user.getName());
-	            	libraryService.displayAllBorrowedBooks(user);
-	            	//exit to menu
+
+	            	for (Book b: bookService.getBorrowedBooks()) {
+	            		System.out.printf("%s | %s | %s | %b%n", b.getId(), b.getTitle(), b.getAuthor());
+	            	}
+	            	
 	            	displayLibraryMenu();
 	            	askMenuChoice();
 	                break;
@@ -160,6 +167,8 @@ public class LibraryApplication {
 	            	//[5] Return Book
 	            	displayLibraryMenu();
 	            	System.out.println(Constants.strDISPLAY_SELECTED_OPTION5);
+	            	String bookTitle = input.nextLine();
+	            	
 	            	logger.info("User {} selected option [5] Return Book", user.getName());
 	            	rowCount = libraryService.displayAllLoans();
 	            	if (rowCount > 0) {
@@ -176,21 +185,34 @@ public class LibraryApplication {
 	                
 	                
 	            case '6':
-	            	// Added try catch block for catching InvalidBookException 01.19.2026
-	            	try {
-		            	//[6] Add Book
-		            	
-		                System.out.println(Constants.strDISPLAY_SELECTED_OPTION6);
-		                Book book = inputNewBook(input);
-		                if (book != null) {
-			                libraryService.addBook(book, user);
-		                }
-
-	            	}catch(InvalidBookException e) {
-	            		logger.error("Adding new book failed", e);
-	            	}
+	            	//[6] Add Book
 	            	
-	                //exit to menu
+	            	logger.info("User {} selected option [6] Add Book", user.getName());
+	            	
+	            	do {
+	            		
+	            		try {
+		            		
+		            		String title = validateTitle(input);
+		            		String author = validateAuthor(input);
+		            		
+		            		bookService.addBook(title, author);
+		            	
+		            	} catch (InvalidBookException e) {
+		            		
+		            		System.out.println(e.getMessage());
+		            		continue;
+		            		
+		            	} catch (UserCancelException e) {
+		            		
+		            		System.out.println(e.getMessage());
+		            		break;
+						}
+	            		
+	            		break;
+	            		
+	            	} while (true);
+	            	
 	            	displayLibraryMenu();
 	            	askMenuChoice();
 	                break;
@@ -260,6 +282,51 @@ public class LibraryApplication {
 	}
 	
 	
+	private String validateAuthor(Scanner input) throws InvalidBookException, UserCancelException {
+		
+		do {
+			
+			System.out.println(Constants.strPROMPT_ENTER_BOOKAUTHOR);
+			String author = input.nextLine();
+			
+			if (author.trim().isEmpty() || author == null) {
+				logger.warn("Author cannot be null.");
+				throw new InvalidBookException(Constants.strERROR_NULL_AUTHOR);
+			}
+			
+			if (author.equalsIgnoreCase("x")) {
+				logger.warn("User {} selected x. Going back to main menu.", user.getName());
+				throw new UserCancelException(Constants.strERROR_MAIN_MENU);
+			}
+			
+			return author;
+			
+		} while (true);
+	}
+
+	private String validateTitle(Scanner input) throws InvalidBookException, UserCancelException {
+		
+		do {
+			
+			System.out.println(Constants.strPROMPT_ENTER_BOOKTITLE);
+	    	String title = input.nextLine();
+	    	
+	    	
+			if (title.trim().isEmpty() || title == null) {
+				logger.warn("Title cannot be null.");
+				throw new InvalidBookException("Title cannot be null or empty");
+			}
+			
+			if (title.equalsIgnoreCase("x")) {
+				logger.warn("User {} selected x. Going back to main menu.", user.getName());
+				throw new UserCancelException(Constants.strERROR_MAIN_MENU);
+			}
+			
+			return title;
+			
+		} while (true);
+	}
+
 	private void validateUserLogin(Scanner input) {
 		
 		boolean login = false;
@@ -271,7 +338,7 @@ public class LibraryApplication {
 				
 				if (userID.trim().isEmpty() || userID == null) {
 					logger.warn("User ID is not valid");
-					throw new InvalidUserException("User ID is not valid.");
+					throw new InvalidUserException("User ID is null or empty.");
 				}
 				
 				System.out.println(Constants.strPROMPT_USERNAME);
@@ -279,13 +346,14 @@ public class LibraryApplication {
 				
 				if (username.trim().isEmpty() || username == null) {
 					logger.warn("Username is not valid");
-					throw new InvalidUserException("Username is not valid.");
+					throw new InvalidUserException("Username is null or empty.");
 				}
 				
 				User userLogin = userService.isUserExisting(userID, username);
 				
 				if (userLogin == null) { 
 					logger.error("Invalid User ID and/or Username.");
+					throw new InvalidUserException("Invalid User ID and/or Username.");
 				}
 				
 				user = userLogin;
@@ -293,7 +361,7 @@ public class LibraryApplication {
 				logger.info("{} successfully login.", user.getName());
 				
 			} catch (InvalidUserException e) {
-				System.out.println("User ID or User name is not valid.");
+				System.out.println(e.getMessage());
 			}
 
 		} while (!login);

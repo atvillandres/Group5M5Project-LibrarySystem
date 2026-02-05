@@ -10,6 +10,4 @@ public class InvalidBookException extends Exception {
 		super(message, cause);
 	}
 
-
-
 }

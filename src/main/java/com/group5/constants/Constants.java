@@ -35,9 +35,6 @@ public abstract class Constants {
 					"\n *             [3] Display All Borrowed Books             [8] Update Book                                            *" + 
 					"\n *             [4] Borrow Book                            [0] Exit                                                   *" + 
 					"\n *             [5] Return Book                                                                                       *" + 
-					//System.out.println(" | ");
-					//System.out.println(" | ");
-					//System.out.println(" | ");
 					"\n *                                                                                                                   *" + 
 					"\n *********************************************************************************************************************");
 
@@ -111,6 +108,12 @@ public abstract class Constants {
 	public static final String strERROR_INVALID_INPUT   = " Invalid input! \n";
 	
 	public static final String strERROR_NO_BOOKS_AVAILABLE = "   No Books Available.";
+	
+	public static final String strERROR_NULL_TITLE		= " Title cannot be null or empty.";
+	
+	public static final String strERROR_NULL_AUTHOR		= " Author cannot be null or empty.";
+	
+	public static final String strERROR_MAIN_MENU		= " Going back to Main Menu. ";
 	
 	
 }
