@@ -23,4 +23,4 @@ Things to do:
 - [ ] Revise Option [5] Return Book
 - [x] Revise Option [6] Add Book
 - [x] Revise Option [7] Remove Book
-- [ ] Revise Option [8] Update Book
+- [x] Revise Option [8] Update Book

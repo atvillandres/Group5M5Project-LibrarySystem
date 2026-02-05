@@ -148,6 +148,7 @@ public class LibraryApplication {
 	            	try {
 	            		Book book = validateBookId(input);
 	            		validateLoanId(input, book);
+	            		
 	            		System.out.println(user.getName() + " successfully loaned " + book.getTitle());
 	            		
 	            	} catch (UserCancelException e) {
@@ -173,12 +174,13 @@ public class LibraryApplication {
 	            		
 	            		Loan loan = validateBorrowedBook(input);
 	            		
-	            		System.out.println(loan.toString());
 	            		bookService.updateReturnBook(loan.getBookId());
 	            		logger.info("Updating borrow status of book id: {}.", loan.getBookId());
 	            		
 	            		loanService.deleteLoanId(loan.getLoanId());
 	            		logger.info("Removing Loan ID: {} in Loan table.", loan.getLoanId());
+	            		
+	            		System.out.println("Book ID: " + loan.getBookId() + " has been returned.");
 	            		
 	            	} catch (UserCancelException e) {
 	            		logger.error(e.getMessage());

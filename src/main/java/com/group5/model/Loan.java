@@ -6,9 +6,6 @@ public class Loan {
 	private String userId;
 	private String bookId;
 	
-	private Book book;
-	private User user;
-	
 	public Loan() {}
 	
 	public Loan(String loanId, String userId, String bookId) {
@@ -18,13 +15,6 @@ public class Loan {
 		this.bookId = bookId;
 	}
 	
-	
-	public Loan(String loanId, Book book, User user) {
-		super();
-		this.id = loanId;
-		this.book = book;
-		this.user = user;
-	}
 
 	public String getLoanId() {
 		return id;
@@ -44,4 +34,11 @@ public class Loan {
 	public void setBookId(String bookId) {
 		this.bookId = bookId;
 	}
+
+	@Override
+	public String toString() {
+		return "Loan [id=" + id + ", userId=" + userId + ", bookId=" + bookId + "]";
+	}
+	
+	
 }
