@@ -31,6 +31,21 @@ public class BookDAOImpl implements BookDAO {
 	private final String ADD_BOOK = 
 			"INSERT INTO book(title, author) values(?,?)";
 	
+	private final String FIND_BOOK_ID =
+			"SELECT id, title, author, isBorrowed FROM book WHERE id = ? AND isBorrowed = false ORDER BY id";
+	
+	private final String UPDATE_BORROW_BOOK =
+			"UPDATE book SET isBorrowed = true where id = ?";
+	
+	private final String UPDATE_RETURN_BOOK =
+			"UPDATE book SET isBorrowed = false where id = ?";
+	
+	private final String DELETE_BOOK =
+			"DELETE FROM book WHERE id = ?";
+	
+	private final String UPDATE_BOOK =
+			"UPDATE book SET title = ?, author = ? WHERE id = ?";
+	
 	@Override
 	public List<Book> getAllBooks()  {
 		
@@ -120,5 +135,96 @@ public class BookDAOImpl implements BookDAO {
 		} catch (SQLException e) {
 			System.out.println("Encountered error on adding a book." + e);
 		}
+	}
+
+	@Override
+	public Book findById(String bookId) {
+		
+		Book book = new Book();
+		
+		try (Connection conn = DBUtil.getConnection();
+				PreparedStatement ps = conn.prepareStatement(FIND_BOOK_ID)) {
+			
+			ps.setLong(1, Long.valueOf(bookId));
+			ResultSet rs = ps.executeQuery();
+			
+			if (rs.next()) {
+				book.setId(String.valueOf(rs.getLong("id")));
+				book.setTitle(rs.getString("title"));
+				book.setAuthor(rs.getString("author"));
+				book.setIsBorrowed(rs.getBoolean("isBorrowed"));
+				return book;
+			}
+			
+			return null;
+			
+		} catch (SQLException e) {
+			System.out.println("Encountered error on database connection. " + e);
+		}
+		return book;
+	}
+
+	@Override
+	public void updateBorrowBook(String bookId) {
+		
+		try (Connection conn = DBUtil.getConnection();
+				PreparedStatement ps = conn.prepareStatement(UPDATE_BORROW_BOOK)) {
+			
+			ps.setInt(1, Integer.valueOf(bookId));
+			ps.executeUpdate();
+			
+		} catch (SQLException e) {
+			logger.error("Encountered error on update borrow book status.");
+			System.out.println("Encountered error on update borrow book status.");
+		}
+		
+	}
+
+	@Override
+	public void deleteBook(String bookId) {
+		
+		try (Connection conn = DBUtil.getConnection();
+				PreparedStatement ps = conn.prepareStatement(DELETE_BOOK)) {
+			
+			ps.setInt(1, Integer.valueOf(bookId));
+			ps.executeUpdate();
+			
+		} catch (SQLException e) {
+			System.out.println("Encountered error on deleting a book.");
+		}
+	}
+
+	@Override
+	public void updateBook(Book book) {
+		
+		try (Connection conn = DBUtil.getConnection();
+				PreparedStatement ps = conn.prepareStatement(UPDATE_BOOK)) {
+			
+			ps.setString(1, book.getTitle());
+			ps.setString(2, book.getAuthor());
+			ps.setInt(3, Integer.valueOf(book.getId()));
+			
+			ps.executeUpdate();
+		
+		} catch (SQLException e) {
+			System.out.println(e.getMessage());
+			logger.error(e.getMessage());
+		}
+	}
+
+	@Override
+	public void updateReturnBook(String bookId) {
+		
+		try (Connection conn = DBUtil.getConnection();
+				PreparedStatement ps = conn.prepareStatement(UPDATE_RETURN_BOOK)) {
+			
+			ps.setInt(1, Integer.valueOf(bookId));
+			ps.executeUpdate();
+			
+		} catch (SQLException e) {
+			logger.error("Encountered error on update borrow book status.");
+			System.out.println("Encountered error on update borrow book status.");
+		}		
+		
 	}
 }

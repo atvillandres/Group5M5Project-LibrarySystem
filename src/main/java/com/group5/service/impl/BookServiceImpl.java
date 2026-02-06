@@ -33,5 +33,29 @@ public class BookServiceImpl implements BookService {
 	public void addBook(String title, String author) {
 		bookDAO.addBook(title, author);
 	}
+	
+	public Book findById(String bookId) {
+		return bookDAO.findById(bookId);
+	}
+
+	@Override
+	public void updateBorrowBook(String bookID) {
+		bookDAO.updateBorrowBook(bookID);
+	}
+
+	@Override
+	public void deleteBook(String bookID) {
+		bookDAO.deleteBook(bookID);
+	}
+
+	@Override
+	public void updateBook(Book book) {
+		bookDAO.updateBook(book);
+	}
+
+	@Override
+	public void updateReturnBook(String bookId) {
+		bookDAO.updateReturnBook(bookId);
+	}
 
 }

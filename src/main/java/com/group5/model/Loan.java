@@ -2,30 +2,43 @@ package com.group5.model;
 
 public class Loan {
 
-	private String loanId;
-	private User user;
-	private Book book;
+	private String id;
+	private String userId;
+	private String bookId;
 	
+	public Loan() {}
 	
-	public String getLoanId() {
-		return loanId;
-	}
-	public void setLoanId(String loanId) {
-		this.loanId = loanId;
-	}
-	public User getUser() {
-		return user;
-	}
-	public void setUser(User user) {
-		this.user = user;
-	}
-	public Book getBook() {
-		return book;
-	}
-	public void setBook(Book book) {
-		this.book = book;
+	public Loan(String loanId, String userId, String bookId) {
+		super();
+		this.id = loanId;
+		this.userId = userId;
+		this.bookId = bookId;
 	}
 	
 
+	public String getLoanId() {
+		return id;
+	}
+	public void setLoanId(String loanId) {
+		this.id = loanId;
+	}
+	public String getUserId() {
+		return userId;
+	}
+	public void setUserId(String userId) {
+		this.userId = userId;
+	}
+	public String getBookId() {
+		return bookId;
+	}
+	public void setBookId(String bookId) {
+		this.bookId = bookId;
+	}
+
+	@Override
+	public String toString() {
+		return "Loan [id=" + id + ", userId=" + userId + ", bookId=" + bookId + "]";
+	}
+	
 	
 }

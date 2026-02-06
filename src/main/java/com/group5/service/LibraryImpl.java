@@ -1,336 +1,48 @@
 package com.group5.service;
 
-import com.group5.model.*;
-import com.group5.util.DBUtil;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-
+import com.group5.model.Book;
+import com.group5.model.Library;
+import com.group5.service.impl.BookServiceImpl;
 import com.group5.constants.Constants;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.group5.dao.impl.BookDAOImpl;
 
 public class LibraryImpl implements LibraryService {
 	
-	private static final Logger logger =  LoggerFactory.getLogger(LibraryImpl.class);
-
-	private static final int initialbookcnt = 5;
-
-	private static List<Book> bookList;
-	private static List<Loan> loanList;
-
 	public Library library;
 	
+	private BookService bookService = new BookServiceImpl(new BookDAOImpl());
 
 	private static final int DISPLAY_ALL_BOOKS       =  1;
 	private static final int DISPLAY_AVAILABLE_BOOKS =  2;
 	private static final int DISPLAY_BORROWED_BOOKS  =  3;
 	private static final int DISPLAY_ALL_LOANS       =  4;
-
-
-
+	
 	@Override
-	public Library initializeList() {
-		bookList = new ArrayList<>();
-		Book book = null;
-		
-		final String INIT_BOOKS = 
-				"SELECT id,title,author,isBorrowed FROM book";
-		
-		try (Connection conn = DBUtil.getConnection();
-				PreparedStatement ps = conn.prepareStatement(INIT_BOOKS);
-				ResultSet rs = ps.executeQuery()) {
-			
-			while (rs.next()) {
-				bookList.add(new Book(
-						rs.getString("id"),
-						rs.getString("title"),
-						rs.getString("author"),
-						rs.getBoolean("isBorrowed")));
-			}
-			
-		} catch (SQLException e) {
-			throw new RuntimeException("Failed to connect to database." + e);
-		}
-
-		//empty loan list
-		loanList = new ArrayList<>();
-
-		this.library = new Library();
-		this.library.setBookList(bookList);
-		this.library.setLoanList(loanList);
-		return this.library;
-	}
-
-
-	@Override
-	public int displayAllBooks () {
-    	System.out.println(Constants.strDISPLAY_ALL_BOOKS );
-
-		//print table header
-		displayTableHeader(DISPLAY_ALL_BOOKS);
-
-		//print book list
-		int rowCount = displayTableDetails(DISPLAY_ALL_BOOKS);
-		if (rowCount <= 0) {
-			System.out.println(Constants.strNORECORDFOUND);
-			logger.warn(Constants.strNORECORDFOUND);
-		}
-
-		//print table footer
-		displayTableLine(DISPLAY_ALL_BOOKS);
-		System.out.println();
-		System.out.println();
-
-		return rowCount;
-
-	}
-
-
-	@Override
-	public int displayAvailableBooks() {
-    	System.out.println(Constants.strDISPLAY_AVAILABLE_BOOKS );
-
-		//print table header
-		displayTableHeader(DISPLAY_AVAILABLE_BOOKS);
-
-		//print book list
-		int rowCount = displayTableDetails(DISPLAY_AVAILABLE_BOOKS);
-
-		if (rowCount <= 0) {
-			System.out.println(Constants.strERROR_NO_BOOKS_AVAILABLE);
-			logger.warn(Constants.strERROR_NO_BOOKS_AVAILABLE);
-		}	
-
-		//print table footer
-		displayTableLine(DISPLAY_AVAILABLE_BOOKS);
-		System.out.println();
-		System.out.println();
-
-		return rowCount;
-	}
-
-
-	@Override
-	public int displayAllBorrowedBooks(User user) {
-		// Added Logger Info - Jimboy Llagono
-		
-    	System.out.println(Constants.strDISPLAY_BORROWED_BOOKS );
-    	
-		//print table header
-		displayTableHeader(DISPLAY_BORROWED_BOOKS);
-
-		//print book list
-		int rowCount = displayTableDetails(DISPLAY_BORROWED_BOOKS);
-		logger.info("Borrow books displayed. There are currently {} borrowed books", rowCount);
-		if (rowCount <= 0) {
-			System.out.println(Constants.strNORECORDFOUND);
-		}
-		
-
-		//print table footer
-		displayTableLine(DISPLAY_BORROWED_BOOKS);
-		System.out.println();
-		System.out.println();
-
-		return rowCount;
-	}
-
-
-	@Override
-	public int displayAllLoans() {
-    	System.out.println(Constants.strDISPLAY_BORROWED_BOOKS );
-
-		//print table header
-		displayTableHeader(DISPLAY_ALL_LOANS);
-
-		//print loan list
-		int rowCount = displayTableDetails(DISPLAY_ALL_LOANS);
-		if (rowCount <= 0) {
-			System.out.println(Constants.strNORECORDFOUND );
-		}
-
-		//print table footer
-		displayTableLine(DISPLAY_ALL_LOANS);
-		System.out.println();
-		System.out.println();
-
-		return rowCount;
-	}
-
-
-	@Override
-	public Library borrowBook(String loanId, User user, String bookIdChoice) {
-		System.out.println(Constants.strPROCESSLOADING);
-
-		for (int j = 0 ; j < bookList.size(); j++) {
-			Book book = bookList.get(j);
-			if (book.getId().equalsIgnoreCase(bookIdChoice)) {
-				book.setIsBorrowed(true);
-
-				Loan newLoan = new Loan();
-				newLoan.setBook(book);
-				newLoan.setUser(user);
-				newLoan.setLoanId(loanId);
-
-				bookList.set(j, book);
-				loanList.add(newLoan);
-
-				System.out.printf(" User %s have successfully loaned the book: %s ", user.getName(), book.getTitle());
-				logger.info("User {} successfully loaned the Book: {} with Loan ID: {}.", user.getName(), book.getTitle(), newLoan.getLoanId());
-
-				break;
-			}
-		}
-
-		this.library.setBookList(bookList);
-		this.library.setLoanList(loanList);
-		return this.library;
-
-	}
-
-
-	@Override
-	public boolean findBook(String input) {
-		boolean isFound = false;
-		for (Book book : bookList) {
-			if (book.getId().equalsIgnoreCase(input)) {
-    			isFound = true;
-    			break;
-    		}
+	public void displayAllBooks() {
+		System.out.println("List of All Books.");
+    	for (Book b: bookService.getAllBooks()) {
+    		System.out.printf("%s | %s | %s%n", b.getId(), b.getTitle(), b.getAuthor());
     	}
-		return isFound;
 	}
 
 
 	@Override
-	public boolean isBookBorrowed(String bookId) {
-		boolean isBorrowed = false;
-		for (Book book : bookList) {
-			if (book.getId().equalsIgnoreCase(bookId)) {
-				isBorrowed =  book.isBorrowed();
-    			break;
-    		}
+	public void displayAvailableBooks() {
+		System.out.println("List of Available Books.");
+    	for (Book b: bookService.getAvailableBooks()) {
+    		System.out.printf("%s | %s | %s%n", b.getId(), b.getTitle(), b.getAuthor());
     	}
-		return isBorrowed;
 	}
 
 
 	@Override
-	public boolean findLoan(String input) {
-		boolean isFound = false;
-		for (Loan loan : loanList) {
-			if (loan.getLoanId().equalsIgnoreCase(input)) {
-    			isFound = true;
-    		}
+	public void displayAllBorrowedBooks() {
+		System.out.println("List of Borrowed Books.");
+    	for (Book b: bookService.getBorrowedBooks()) {
+    		System.out.printf("%s | %s | %s%n", b.getId(), b.getTitle(), b.getAuthor());
     	}
-		return isFound;
-	}
+    }
 
-
-	@Override
-	public Library returnBook(String loanChoice) {
-		System.out.println(Constants.strPROCESSLOADING );
-		for (int i = 0 ; i < loanList.size(); i++) {
-			Loan loan = loanList.get(i);
-			if (loan.getLoanId().equalsIgnoreCase(loanChoice)) {
-				Book book = loan.getBook();
-				book.setIsBorrowed(false);
-
-				loanList.remove(i);
-				System.out.println(" You have successfully returned the book entitled " + book.getTitle());
-				logger.info("Successfully returned the book {}", book.getTitle());
-				break;
-			}
-		}
-		this.library.setBookList(bookList);
-		this.library.setLoanList(loanList);
-		return this.library;
-	}
-
-
-	@Override
-	public Library addBook(Book newBook, User user) {
-		
-
-			
-		bookList.add(newBook);
-		library.setBookList(bookList);
-		System.out.println("You have successfully added book with title " + newBook.getTitle());
-		
-		//Added logger info Jimboy Llagono 01.19.2026
-		logger.info("User {} have successfully added book with title {}", user.getName() ,newBook.getTitle());
-
-		
-		return this.library;
-		
-
-	}
-
-
-	@Override
-	public Library deleteBook(String bookfordeletion) {
-		System.out.println(Constants.strPROCESSLOADING );
-		for (int j = 0 ; j < bookList.size(); j++) {
-			Book book = bookList.get(j);
-			if (book.getId().equalsIgnoreCase(bookfordeletion)) {
-				//remove the book
-				bookList.remove(j);
-
-				//remove any existing loan
-				for (int i = 0 ; i < loanList.size(); i++) {
-					Loan loan = loanList.get(i);
-					if (loan.getBook().getId().equalsIgnoreCase(bookfordeletion)) {
-						//System.out.println(loan.getLoanId());
-						//System.out.println(loan.getBook().getId());
-						//remove from loans
-						loanList.remove(i);
-						logger.info("Successfully removed in the loan list of the book id {}", bookfordeletion);
-						break;
-					}
-				}
-				System.out.println(" You have successfully removed the book entitled " + book.getTitle());
-				break;
-			}
-		}
-		library.setBookList(bookList);
-		library.setLoanList(loanList);
-		return this.library;
-	}
-
-
-	@Override
-	public Library updateBook(Book updatedBook) {
-		System.out.println(Constants.strPROCESSLOADING );
-		for (int j = 0 ; j < bookList.size(); j++) {
-			Book book = bookList.get(j);
-			if (book.getId().equalsIgnoreCase(updatedBook.getId())) {
-				bookList.set(j, updatedBook);
-				System.out.printf(" You have successfully updated Book ID: %s ", updatedBook.getId());
-				break;
-			}
-		}
-		library.setBookList(bookList);
-		library.setLoanList(loanList);
-		return this.library;
-	}
-
-
-
-
-	/*
-	 * parameter input
-	 * displayType:
-	 * 1 - all books
-	 * 2 - available books
-	 * 3 - borrowed books
-	 *
-	 */
 
 	private static void displayTableHeader(int displayType) {
 		//header
@@ -374,56 +86,7 @@ public class LibraryImpl implements LibraryService {
 	 *
 	 */
 	private static int displayTableDetails(int displayType) {
-		int rowCount = 0;
-		String userBorrower = "";
-
-		if (displayType == DISPLAY_ALL_BOOKS || displayType == DISPLAY_AVAILABLE_BOOKS || displayType == DISPLAY_BORROWED_BOOKS) {
-			for (Book book : bookList) {
-				if (displayType == DISPLAY_ALL_BOOKS) {  //all books
-					rowCount++;
-					System.out.println("" +
-							Constants.strTableColumnDelimiter + padRight(book.getId(),     Constants.maxLenBookId,     " ") +
-							Constants.strTableColumnDelimiter + padRight(book.getTitle(),  Constants.maxLenBookTitle,  " ") +
-							Constants.strTableColumnDelimiter + padRight(book.getAuthor(), Constants.maxLenBookAuthor, " ") +
-							Constants.strTableColumnDelimiter);
-				} else if (displayType == DISPLAY_AVAILABLE_BOOKS) { //available books
-					if (!book.isBorrowed()) {
-						rowCount++;
-						System.out.println("" +
-								Constants.strTableColumnDelimiter + padRight(book.getId()    , Constants.maxLenBookId,     " ") +
-								Constants.strTableColumnDelimiter + padRight(book.getTitle() , Constants.maxLenBookTitle,  " ") +
-								Constants.strTableColumnDelimiter + padRight(book.getAuthor(), Constants.maxLenBookAuthor, " ") +
-								Constants.strTableColumnDelimiter);
-					}
-				} else if (displayType == DISPLAY_BORROWED_BOOKS) {  //borrowed books
-					if (book.isBorrowed()) {
-						rowCount++;
-						for (Loan loan : loanList) {
-							if (book.getId().equalsIgnoreCase(loan.getBook().getId())) {
-								userBorrower = loan.getUser().getName();
-								break;
-							}
-						}
-						System.out.println("" +
-								Constants.strTableColumnDelimiter + padRight(book.getId(),     Constants.maxLenBookId,     " ") +
-								Constants.strTableColumnDelimiter + padRight(book.getTitle(),  Constants.maxLenBookTitle,  " ") +
-								Constants.strTableColumnDelimiter + padRight(book.getAuthor(), Constants.maxLenBookAuthor, " ") +
-								Constants.strTableColumnDelimiter + padRight(userBorrower,     Constants.maxLenUserName,   " ") +
-								Constants.strTableColumnDelimiter);
-					}
-				}
-			}
-		} else if (displayType == DISPLAY_ALL_LOANS) { // all loan records
-			for (Loan loan : loanList) {
-				rowCount++;
-				System.out.println("" +
-						Constants.strTableColumnDelimiter + padRight(loan.getLoanId(),          Constants.maxLenLoanId,    " ") +
-						Constants.strTableColumnDelimiter + padRight(loan.getBook().getTitle(), Constants.maxLenBookTitle, " ") +
-						Constants.strTableColumnDelimiter + padRight(loan.getUser().getName(),  Constants.maxLenUserName,  " ") +
-						Constants.strTableColumnDelimiter);
-			}
-		}
-		return rowCount;
+		return 0;
 	}
 
 
@@ -487,6 +150,9 @@ public class LibraryImpl implements LibraryService {
 
 		return returnValue;
 	}
+
+
+
 
 
 
